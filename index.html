@@ -32,6 +32,7 @@
       </div>
       <div class="hud-sub mono" id="hud-best">LAP --:--.-- · BEST --:--.--</div>
     </div>
+    <div id="tilt-ind" aria-hidden="true"><span>TILT</span><div class="track"><i id="tilt-dot"></i></div></div>
     <canvas id="minimap" width="300" height="300"></canvas>
     <div class="hud-br">
       <canvas id="speedo" width="400" height="400"></canvas>
@@ -149,6 +150,10 @@
       </div>
       <div class="set-group">
         <h3>Controls</h3>
+        <label class="toggle touch-only"><span>Tilt steering (rotate phone like a wheel)</span><input type="checkbox" data-setting="tilt"><i></i></label>
+        <div class="opt touch-only"><label>Tilt sensitivity</label>
+          <div class="seg" data-setting="tiltSens"><button data-v="low">Low</button><button data-v="medium">Medium</button><button data-v="high">High</button></div>
+        </div>
         <label class="toggle"><span>Auto-accelerate</span><input type="checkbox" data-setting="autoGas"><i></i></label>
         <label class="toggle"><span>Vibration / rumble</span><input type="checkbox" data-setting="vibration"><i></i></label>
       </div>
@@ -190,7 +195,8 @@
       <div class="how-col">
         <h3>Touch</h3>
         <ul class="keys">
-          <li>Left thumb: steering arrows</li>
+          <li>Tilt steering: hold the phone like a wheel and rotate it — centre is set automatically at the start lights</li>
+          <li>Or turn tilt off in Settings and use the ◀ ▶ arrows</li>
           <li>Right thumb: gas, brake & N₂O</li>
           <li>Auto-accelerate is on by default for touch</li>
         </ul>
@@ -247,6 +253,7 @@
   <script src="js/data.js"></script>
   <script src="js/art.js"></script>
   <script src="js/audio.js"></script>
+  <script src="js/tilt.js"></script>
   <script src="js/game.js"></script>
   <script src="js/ui.js"></script>
 </body>

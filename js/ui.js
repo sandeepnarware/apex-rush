@@ -141,6 +141,19 @@
     $$('.track-card').forEach((c, j) => c.classList.toggle('sel', j === selTrack));
   }
 
+  /* Turn on tilt steering for a race. Called from a tap so iOS can ask for
+     motion permission; falls back to the on-screen arrows if unavailable. */
+  async function ensureTilt() {
+    document.body.classList.remove('tilt');
+    if (!Store.isTouch || !S.tilt) return;
+    Tilt.setSensitivity(S.tiltSens);
+    if (!(await Tilt.enable())) { showNotice('Tilt steering unavailable · using touch arrows'); return; }
+    document.body.classList.add('tilt');
+    setTimeout(() => {
+      if (S.tilt && !Tilt.active) { document.body.classList.remove('tilt'); showNotice('No motion sensor detected · using touch arrows'); }
+    }, 1500);
+  }
+
   function startRace() {
     D.track = selTrack; Store.save();
     hideAll();
@@ -151,6 +164,7 @@
         el.requestFullscreen({ navigationUI: 'hide' }).then(() => screen.orientation?.lock?.('landscape')).catch(() => {});
       }
     }
+    ensureTilt();
     Game.startRace(selTrack);
   }
   $('#btn-start').addEventListener('click', startRace);
@@ -176,6 +190,7 @@
     S[k] = seg.hasAttribute('data-num') ? Number(b.dataset.v) : b.dataset.v;
     Store.save(); syncSegs();
     if (k === 'quality') Game.resize();
+    if (k === 'tiltSens') Tilt.setSensitivity(S.tiltSens);
   }));
   $$('input[data-setting]').forEach(inp => inp.addEventListener('input', () => {
     const k = inp.dataset.setting;
@@ -186,6 +201,15 @@
       if (k === 'music') { if (S.music > 0) Sound.musicStart(); else Sound.musicStop(); }
     }
     if (k === 'minimap') $('#minimap').classList.toggle('hidden', !S.minimap);
+    if (k === 'tilt') {
+      if (S.tilt) {
+        Tilt.enable().then(ok => {
+          if (ok) { if (Game.inRace) document.body.classList.add('tilt'); return; }
+          S.tilt = false; inp.checked = false; Store.save();
+          showNotice('Motion sensor permission denied · using touch arrows');
+        });
+      } else { Tilt.disable(); document.body.classList.remove('tilt'); }
+    }
   }));
   $('#btn-fullscreen').addEventListener('click', () => {
     if (document.fullscreenElement) document.exitFullscreen?.();
@@ -286,7 +310,7 @@
   });
   $('#btn-pause').addEventListener('click', doPause);
   $('#btn-resume').addEventListener('click', resume);
-  $('#btn-restart').addEventListener('click', () => { hideAll(); Game.resume(); Game.restart(); });
+  $('#btn-restart').addEventListener('click', () => { hideAll(); ensureTilt(); Game.resume(); Game.restart(); });
   $('#btn-quit').addEventListener('click', toMenu);
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) { if (Game.inRace && !Game.paused) doPause(); Sound.suspend(true); }
@@ -327,10 +351,10 @@
       <span>${x.name}</span><span class="t">${i === 0 ? Game.fmt(x.time) : '+' + (x.time - r.list[0].time).toFixed(2) + 's'}</span></li>`).join('');
     show('results');
   });
-  $('#btn-again').addEventListener('click', () => { hideAll(); Game.startRace(selTrack); });
+  $('#btn-again').addEventListener('click', () => { hideAll(); ensureTilt(); Game.startRace(selTrack); });
   $('#btn-next').addEventListener('click', () => {
     selTrack = (selTrack + 1) % TRACKS.length; D.track = selTrack; Store.save();
-    hideAll(); Game.startRace(selTrack);
+    hideAll(); ensureTilt(); Game.startRace(selTrack);
   });
   $('#btn-menu').addEventListener('click', toMenu);
 
@@ -466,6 +490,8 @@
   requestAnimationFrame(padLoop);
 
   // ---------------------------------------------------------- boot
+  document.body.classList.toggle('touch', Store.isTouch);
+  Tilt.setSensitivity(S.tiltSens);
   Game.init();
   Game.startAttract();
   show('menu');

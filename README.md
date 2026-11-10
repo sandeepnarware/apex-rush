@@ -15,7 +15,7 @@ To deploy, upload the folder to any static host (GitHub Pages, Netlify, S3, …)
 - 4 circuits (Coastal, Desert Sunset, Neon City night, Alpine snow) with hills, bends, parallax skies
 - 4 cars with distinct stats + 10 paint colours, 7 AI rivals with overtaking/avoidance, 3 difficulty levels
 - Nitro, tyre smoke, off-road dust, collisions, start lights, lap timing, live positions, minimap
-- Keyboard, touch (with auto-accelerate) and gamepad (with rumble) controls
+- Keyboard, touch (with auto-accelerate), tilt steering (rotate the phone like a wheel) and gamepad (with rumble) controls
 - Full controller support: drive with triggers/stick, and navigate every menu with
   D-pad/stick + A (select), B (back), LB/RB (switch car/circuit), Start (pause/resume)
 - Synthesised engine/tyre/wind audio and a procedural synthwave soundtrack
@@ -27,5 +27,6 @@ To deploy, upload the folder to any static host (GitHub Pages, Netlify, S3, …)
 - `js/art.js` – procedural sprites & backgrounds
 - `js/audio.js` – Web Audio engine & music
 - `js/data.js` – cars, themes, track layouts (edit here to add circuits)
+- `js/tilt.js` – motion-sensor (tilt) steering
 - `js/ui.js` – menus, garage, settings, results, PWA install
 - `sw.js` – offline cache (bump `CACHE` when you change files)

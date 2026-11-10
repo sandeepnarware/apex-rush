@@ -1,8 +1,8 @@
 /* Apex Rush service worker: precache everything so the game runs fully offline. */
-const CACHE = 'apexrush-v1.1.0';
+const CACHE = 'apexrush-v1.2.0';
 const ASSETS = [
   './', './index.html', './manifest.webmanifest', './css/style.css',
-  './js/store.js', './js/data.js', './js/art.js', './js/audio.js', './js/game.js', './js/ui.js',
+  './js/store.js', './js/data.js', './js/art.js', './js/audio.js', './js/tilt.js', './js/game.js', './js/ui.js',
   './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png',
 ];
 

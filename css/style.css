@@ -248,6 +248,15 @@ kbd { display: inline-block; min-width: 30px; padding: 4px 8px; margin-right: 6p
 
 #rotate-hint { display: none; }
 
+/* ------------------------------------------------------------ tilt steering */
+body:not(.touch) .touch-only { display: none !important; }
+body.tilt .tc-left { visibility: hidden; }
+#tilt-ind { display: none; position: absolute; left: calc(22px + var(--safe-l)); bottom: calc(26px + var(--safe-b)); align-items: center; gap: 10px; padding: 10px 14px; border-radius: 14px; background: rgba(10,14,28,.45); border: 1px solid var(--line); font-size: 10px; font-weight: 900; letter-spacing: .2em; color: var(--muted); }
+body.tilt #tilt-ind { display: flex; }
+#tilt-ind .track { position: relative; width: 112px; height: 6px; border-radius: 99px; background: rgba(0,0,0,.45); border: 1px solid rgba(255,255,255,.2); }
+#tilt-ind .track::before { content: ''; position: absolute; left: 50%; top: -3px; width: 2px; height: 10px; background: rgba(255,255,255,.4); }
+#tilt-dot { position: absolute; left: 50%; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 10px var(--cyan); }
+
 /* ------------------------------------------------------------ controller */
 body.pad :focus { outline: none; }
 body.pad .pf { outline: 3px solid var(--cyan); outline-offset: 3px; }

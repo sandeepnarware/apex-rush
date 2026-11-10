@@ -9,6 +9,7 @@ const Store = (() => {
       quality: 'high', units: 'kmh',
       laps: 3, difficulty: 'normal',
       autoGas: isTouch, vibration: true, minimap: true,
+      tilt: isTouch, tiltSens: 'medium',
     },
     car: 0, color: 0, track: 0,
     records: {},

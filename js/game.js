@@ -212,6 +212,7 @@ const Game = (() => {
   function startRace(idx) {
     setup(idx, false);
     padPausePrev = true; // the button that started the race must be released before it can pause
+    Tilt.calibrate();
     mode = 'countdown';
     countdown = 3.999; lastCount = 4;
     showHud(true);
@@ -250,7 +251,7 @@ const Game = (() => {
     for (const p of pads) if (p && p.connected) return p;
     return null;
   }
-  function readInput() {
+  function readInput(dt) {
     let steer = 0, gas = 0, brake = 0, nitro = false;
     if (keys.ArrowLeft || keys.KeyA) steer -= 1;
     if (keys.ArrowRight || keys.KeyD) steer += 1;
@@ -275,6 +276,8 @@ const Game = (() => {
       if (p && !padPausePrev) emit('pauseKey');
       padPausePrev = p;
     }
+    input.tilt = Store.data.settings.tilt && Tilt.active;
+    if (input.tilt) steer += Tilt.update(dt);
     if (Store.data.settings.autoGas && brake < 0.1) gas = Math.max(gas, 1);
     input.steer = clamp(steer, -1, 1); input.gas = gas; input.brake = brake; input.nitro = nitro;
   }
@@ -287,7 +290,7 @@ const Game = (() => {
       const c = Math.ceil(countdown);
       if (c !== lastCount) {
         lastCount = c;
-        if (c >= 1 && c <= 3) { Sound.fx.beep(false); setLights(4 - c); }
+        if (c >= 1 && c <= 3) { Sound.fx.beep(false); setLights(4 - c); if (c === 1) Tilt.calibrate(); }
         else if (c <= 0) {
           Sound.fx.beep(true); setLights(4);
           mode = 'race'; raceTime = 0;
@@ -297,7 +300,7 @@ const Game = (() => {
     }
     if (mode === 'race' || mode === 'finished') raceTime += dt;
     const frozen = mode === 'countdown';
-    readInput();
+    readInput(dt);
     updatePlayer(dt, frozen);
     updateAI(dt, frozen);
     if (!frozen) collideCars();
@@ -346,7 +349,7 @@ const Game = (() => {
     } else {
       ({ steer, gas, brake, nitro } = input);
     }
-    player.steer += (steer - player.steer) * Math.min(1, dt * 7);
+    player.steer += (steer - player.steer) * Math.min(1, dt * (input.tilt && !auto ? 18 : 7));
     player.gas = gas; player.braking = brake > 0.1;
     if (frozen) {
       player.rev = lerp(player.rev, gas ? 0.9 : 0.12, Math.min(1, dt * (gas ? 5 : 3)));
@@ -858,7 +861,7 @@ const Game = (() => {
   const hud = {
     root: $('hud'), pos: $('hud-pos'), posOf: $('hud-posof'), lap: $('hud-lap'), time: $('hud-time'),
     best: $('hud-best'), nitro: $('nitro-fill'), nitroWrap: $('nitro'), toast: $('toast'),
-    speedo: $('speedo'), mm: $('minimap'),
+    speedo: $('speedo'), mm: $('minimap'), tiltDot: $('tilt-dot'),
   };
   const sctx = hud.speedo.getContext('2d'), mctx = hud.mm.getContext('2d');
   let hudCache = {}, toastTO = 0;
@@ -896,6 +899,7 @@ const Game = (() => {
     const nw = Math.round(player.nitro * 100);
     if (hudCache.nitro !== nw) { hudCache.nitro = nw; hud.nitro.style.transform = `scaleX(${player.nitro})`; }
     hud.nitroWrap.classList.toggle('active', player.nitroOn);
+    if (input.tilt) hud.tiltDot.style.transform = `translateX(${(Tilt.value * 50).toFixed(1)}px)`;
     drawSpeedo();
     if (Store.data.settings.minimap) drawMinimap();
   }
@@ -984,7 +988,7 @@ const Game = (() => {
     init, on, startRace, startAttract, resize,
     restart() { startRace(trackIdx); },
     pause() { if (mode === 'countdown' || mode === 'race' || mode === 'finished') { paused = true; Sound.silence(); return true; } return false; },
-    resume() { paused = false; lastT = performance.now(); padPausePrev = true; },
+    resume() { paused = false; lastT = performance.now(); padPausePrev = true; Tilt.calibrate(); },
     get mode() { return mode; },
     get paused() { return paused; },
     get inRace() { return mode === 'countdown' || mode === 'race'; },
