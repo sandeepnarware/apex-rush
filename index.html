@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#0a0d18">
+  <meta name="description" content="Apex Rush — a fast arcade racing game that runs entirely in your browser, online or offline.">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Apex Rush">
+  <title>Apex Rush</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <canvas id="game" aria-label="Race view"></canvas>
+
+  <!-- ===================== HUD ===================== -->
+  <div id="hud" class="hidden" aria-live="off">
+    <div class="hud-tl panel">
+      <div class="hud-label">POS</div>
+      <div class="hud-pos"><span id="hud-pos">8</span><small id="hud-posof">/8</small></div>
+    </div>
+    <div class="hud-tc panel">
+      <div class="hud-row">
+        <div><div class="hud-label">LAP</div><div class="hud-big" id="hud-lap">1/3</div></div>
+        <div class="hud-sep"></div>
+        <div><div class="hud-label">TIME</div><div class="hud-big mono" id="hud-time">0:00.00</div></div>
+      </div>
+      <div class="hud-sub mono" id="hud-best">LAP --:--.-- · BEST --:--.--</div>
+    </div>
+    <canvas id="minimap" width="300" height="300"></canvas>
+    <div class="hud-br">
+      <canvas id="speedo" width="400" height="400"></canvas>
+      <div id="nitro"><div class="nitro-label">NITRO</div><div class="nitro-bar"><div id="nitro-fill"></div></div></div>
+    </div>
+    <div id="toast"></div>
+  </div>
+  <button id="btn-pause" class="icon-btn hidden" aria-label="Pause">
+    <svg viewBox="0 0 24 24" width="22" height="22"><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor"/></svg>
+  </button>
+
+  <div id="countdown">
+    <div class="lights"><span class="light"></span><span class="light"></span><span class="light"></span></div>
+    <div id="cd-text">GET READY</div>
+  </div>
+
+  <!-- ===================== Touch controls ===================== -->
+  <div id="touch" class="hidden">
+    <div class="tc-left">
+      <button class="tbtn" data-touch="left" aria-label="Steer left"><svg viewBox="0 0 24 24"><path d="M15 4 7 12l8 8" /></svg></button>
+      <button class="tbtn" data-touch="right" aria-label="Steer right"><svg viewBox="0 0 24 24"><path d="m9 4 8 8-8 8" /></svg></button>
+    </div>
+    <div class="tc-right">
+      <button class="tbtn nitro" data-touch="nitro" aria-label="Nitro">N₂O</button>
+      <button class="tbtn brake" data-touch="brake" aria-label="Brake">BRAKE</button>
+      <button class="tbtn gas" data-touch="gas" aria-label="Accelerate">GAS</button>
+    </div>
+  </div>
+
+  <!-- ===================== Screens ===================== -->
+  <section class="screen active" id="menu">
+    <div class="menu-wrap">
+      <div class="logo">
+        <div class="logo-mark">APEX<span>RUSH</span></div>
+        <div class="logo-sub">ARCADE RACING · BROWSER EDITION</div>
+      </div>
+      <nav class="menu-buttons">
+        <button class="btn primary big" data-go="tracks"><span>Race</span></button>
+        <button class="btn" data-go="garage"><span>Garage</span></button>
+        <button class="btn" data-go="settings"><span>Settings</span></button>
+        <button class="btn" data-go="howto"><span>How to Play</span></button>
+        <button class="btn ghost hidden" id="btn-install"><span>Install App</span></button>
+      </nav>
+      <div class="menu-stats" id="menu-stats"></div>
+    </div>
+    <div class="corner-note" id="offline-note">Works offline · No server required</div>
+  </section>
+
+  <section class="screen" id="tracks">
+    <header class="screen-head">
+      <button class="icon-btn back" data-go="menu" aria-label="Back"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M15 4 7 12l8 8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <h2>Select Circuit</h2>
+    </header>
+    <div class="track-grid" id="track-grid"></div>
+    <div class="race-options panel">
+      <div class="opt">
+        <label>Difficulty</label>
+        <div class="seg" data-setting="difficulty">
+          <button data-v="easy">Easy</button><button data-v="normal">Normal</button><button data-v="hard">Hard</button>
+        </div>
+      </div>
+      <div class="opt">
+        <label>Laps</label>
+        <div class="seg" data-setting="laps" data-num>
+          <button data-v="1">1</button><button data-v="3">3</button><button data-v="5">5</button>
+        </div>
+      </div>
+      <button class="btn primary" id="btn-start"><span>Start Race</span></button>
+    </div>
+  </section>
+
+  <section class="screen" id="garage">
+    <header class="screen-head">
+      <button class="icon-btn back" data-go="menu" aria-label="Back"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M15 4 7 12l8 8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <h2>Garage</h2>
+    </header>
+    <div class="garage">
+      <div class="garage-stage">
+        <button class="icon-btn arrow" id="car-prev" aria-label="Previous car"><svg viewBox="0 0 24 24" width="26" height="26"><path d="M15 4 7 12l8 8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <canvas id="garage-canvas" width="900" height="560"></canvas>
+        <button class="icon-btn arrow" id="car-next" aria-label="Next car"><svg viewBox="0 0 24 24" width="26" height="26"><path d="m9 4 8 8-8 8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+      <div class="garage-info panel">
+        <div class="car-name" id="car-name">Vortex GT</div>
+        <div class="car-desc" id="car-desc"></div>
+        <div class="stats" id="car-stats"></div>
+        <div class="paint-label">Paint</div>
+        <div class="swatches" id="swatches"></div>
+        <button class="btn primary" data-go="tracks"><span>Race this car</span></button>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen" id="settings">
+    <header class="screen-head">
+      <button class="icon-btn back" data-back aria-label="Back"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M15 4 7 12l8 8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <h2>Settings</h2>
+    </header>
+    <div class="settings panel">
+      <div class="set-group">
+        <h3>Audio</h3>
+        <label class="range"><span>Master</span><input type="range" min="0" max="1" step="0.05" data-setting="master"></label>
+        <label class="range"><span>Music</span><input type="range" min="0" max="1" step="0.05" data-setting="music"></label>
+        <label class="range"><span>Effects</span><input type="range" min="0" max="1" step="0.05" data-setting="sfx"></label>
+      </div>
+      <div class="set-group">
+        <h3>Graphics</h3>
+        <div class="opt"><label>Quality</label>
+          <div class="seg" data-setting="quality"><button data-v="low">Low</button><button data-v="medium">Medium</button><button data-v="high">High</button></div>
+        </div>
+        <div class="opt"><label>Speed units</label>
+          <div class="seg" data-setting="units"><button data-v="kmh">km/h</button><button data-v="mph">mph</button></div>
+        </div>
+        <label class="toggle"><span>Show minimap</span><input type="checkbox" data-setting="minimap"><i></i></label>
+      </div>
+      <div class="set-group">
+        <h3>Controls</h3>
+        <label class="toggle"><span>Auto-accelerate</span><input type="checkbox" data-setting="autoGas"><i></i></label>
+        <label class="toggle"><span>Vibration / rumble</span><input type="checkbox" data-setting="vibration"><i></i></label>
+      </div>
+      <div class="set-actions">
+        <button class="btn" id="btn-fullscreen"><span>Toggle Fullscreen</span></button>
+        <button class="btn danger" id="btn-reset"><span>Reset Records</span></button>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen" id="howto">
+    <header class="screen-head">
+      <button class="icon-btn back" data-go="menu" aria-label="Back"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M15 4 7 12l8 8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <h2>How to Play</h2>
+    </header>
+    <div class="howto panel">
+      <div class="how-col">
+        <h3>Keyboard</h3>
+        <ul class="keys">
+          <li><kbd>↑</kbd><kbd>W</kbd> Accelerate</li>
+          <li><kbd>↓</kbd><kbd>S</kbd> Brake</li>
+          <li><kbd>←</kbd><kbd>→</kbd><kbd>A</kbd><kbd>D</kbd> Steer</li>
+          <li><kbd>Space</kbd><kbd>Shift</kbd> Nitro</li>
+          <li><kbd>Esc</kbd><kbd>P</kbd> Pause</li>
+        </ul>
+      </div>
+      <div class="how-col">
+        <h3>Gamepad</h3>
+        <ul class="keys">
+          <li><kbd>RT</kbd><kbd>A</kbd> Accelerate</li>
+          <li><kbd>LT</kbd><kbd>B</kbd> Brake</li>
+          <li><kbd>L-Stick</kbd><kbd>D-Pad</kbd> Steer</li>
+          <li><kbd>X</kbd><kbd>RB</kbd> Nitro</li>
+          <li><kbd>Start</kbd> Pause / resume</li>
+          <li><kbd>D-Pad</kbd><kbd>A</kbd><kbd>B</kbd> Navigate menus</li>
+          <li><kbd>LB</kbd><kbd>RB</kbd> Switch car / circuit</li>
+        </ul>
+      </div>
+      <div class="how-col">
+        <h3>Touch</h3>
+        <ul class="keys">
+          <li>Left thumb: steering arrows</li>
+          <li>Right thumb: gas, brake & N₂O</li>
+          <li>Auto-accelerate is on by default for touch</li>
+        </ul>
+        <h3>Tips</h3>
+        <ul class="tips">
+          <li>Yellow chevrons warn of sharp bends — lift or brake before them.</li>
+          <li>Grass and sand slow you down; trees and rocks stop you dead.</li>
+          <li>Nitro refills slowly. Save it for straights and overtakes.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen dim" id="pause">
+    <div class="modal panel">
+      <h2>Paused</h2>
+      <button class="btn primary" id="btn-resume"><span>Resume</span></button>
+      <button class="btn" id="btn-restart"><span>Restart</span></button>
+      <button class="btn" data-go="settings"><span>Settings</span></button>
+      <button class="btn ghost" id="btn-quit"><span>Quit to Menu</span></button>
+    </div>
+  </section>
+
+  <section class="screen dim" id="results">
+    <div class="results panel">
+      <div class="res-head">
+        <div class="res-pos" id="res-pos">1<sup>st</sup></div>
+        <div>
+          <div class="res-track" id="res-track"></div>
+          <div class="res-times">
+            <div><span class="hud-label">TOTAL</span><b class="mono" id="res-time"></b></div>
+            <div><span class="hud-label">BEST LAP</span><b class="mono" id="res-lap"></b></div>
+          </div>
+          <div class="badge hidden" id="res-record">NEW RECORD</div>
+        </div>
+      </div>
+      <ol class="standings" id="res-list"></ol>
+      <div class="res-actions">
+        <button class="btn primary" id="btn-again"><span>Race Again</span></button>
+        <button class="btn" id="btn-next"><span>Next Circuit</span></button>
+        <button class="btn ghost" id="btn-menu"><span>Menu</span></button>
+      </div>
+    </div>
+  </section>
+
+  <div id="pad-hint" aria-hidden="true">
+    <span><b class="pb a">A</b>Select</span><span><b class="pb b">B</b>Back</span>
+    <span><b class="pb">LB</b><b class="pb">RB</b>Switch car / circuit</span><span><b class="pb">☰</b>Start</span>
+  </div>
+  <div id="notice" role="status"></div>
+  <div id="rotate-hint">Rotate your device to landscape for the best experience</div>
+
+  <script src="js/store.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/art.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/ui.js"></script>
+</body>
+</html>
